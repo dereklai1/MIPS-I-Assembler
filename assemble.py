@@ -7,14 +7,14 @@ def int_to_bin(integer, length):
 			return '1'
 		elif bit == '1':
 			return '0'
-	
+
 	def bin_str_add1(bin_arr):
 		carry = True
 		for i in range(0, len(bin_arr)):
 			if not carry:
 				break
 			c = bin_arr[len(bin_arr) - i - 1]
-			
+
 			if c == '0':
 				bin_arr[len(bin_arr) - i - 1] = '1'
 				break
@@ -38,7 +38,7 @@ def shiftamt(shamt):
 
 def op(opcode):
 	return int_to_bin(opcode, 6)
-	
+
 def func(func_code):
 	return int_to_bin(func_code, 6)
 
@@ -50,7 +50,7 @@ def reg(token):
 		return int_to_bin(int(REGISTER_ALIAS[t].strip('$')), 5)
 	else:
 		return int_to_bin(int(t.strip('$')), 5)
-	
+
 
 # Branch calculator
 def branch_label(label, line_ind, jump_labels):
@@ -72,7 +72,7 @@ def parse_line(line, line_ind, jump_labels, data_table):
 		return '0'*32
 
 	# ALL R-type instructions
-	if opcode == 0: 
+	if opcode == 0:
 		func_code = FUNCCODE[tokens[0]]
 		if func_code == FUNCCODE["JR"] or func_code == FUNCCODE["MTHI"] \
 				or func_code == FUNCCODE["MTLO"]:
@@ -140,7 +140,7 @@ def parse_line(line, line_ind, jump_labels, data_table):
 			immediate = process_num(tokens[1], 26)
 		else:
 			immediate = jump_label(tokens[1], line_ind, jump_labels)
-		
+
 		return op(opcode) + immediate
 
 	# ALL I-type instructions
@@ -198,7 +198,7 @@ def assemble(filepath):
 	lines = [v for v in lines if v != ""]
 	# Do first pass on all lines
 	# section .text .config
-	
+
 	if not (".config" in lines and ".text" in lines and ".data" in lines):
 		print("Please include .config .text & .data labels in your code.")
 		exit(1)
@@ -218,26 +218,26 @@ def assemble(filepath):
 	print(instr_word_count)
 
 	lines[lines.index(".text")+1:lines.index(".text")+1] = [
-		"LUI $sp #0xBFC0", 
-		f"ADDIU $gp $sp #{(instr_word_count+4)*4}", 
+		"LUI $sp #0xBFC0",
+		f"ADDIU $gp $sp #{(instr_word_count+4)*4}",
 		"ADDIU $sp $sp #255",
 		"ADDU $fp $fp $sp",
 	]
 
-	for n, l in enumerate(lines): 
+	for n, l in enumerate(lines):
 		# extract indexes of .config, .text, .data
 		if len(l) > 0 and l[0] == ".":
 			dot_indexes[l] = n
-		# extract indexes of label: 
+		# extract indexes of label:
 		if len(l) > 0 and l[-1] == ":":
 			lines.remove(l)
 			jump_labels[l[:-1]] = n - dot_indexes[".text"] - 1
-	
+
 	config = lines[dot_indexes[".config"]+1:dot_indexes[".text"]]
 	instr = lines[dot_indexes[".text"]+1:dot_indexes[".data"]]
 	data = lines[dot_indexes[".data"]+1:]
 
-	
+
 	config_table = {}
 	for line in config:
 		tokened = line.split()
@@ -252,13 +252,13 @@ def assemble(filepath):
 			elif config_table["ARCH"] == "vonn" or config_table["ARCH"] == "von neumann" or \
 					config_table["ARCH"] == "v":
 				data_table[tokened[0]] = (tokened[1], data_ind)
-	
-	
+
+
 	# Do second pass on instr
-	binlines = [] 
+	binlines = []
 	for line_num, i in enumerate(instr):
 		binlines.append(parse_line(i, line_num, jump_labels, data_table) + " // " + i + "\n")
-	
+
 	# Do second pass on data
 	datalines = []
 	for d in data:
@@ -293,7 +293,7 @@ def assemble(filepath):
 			verilogF.write(
 f"""
 module {outname} ();
-	
+
     logic active;
     logic[31:0] register_v0;
 
@@ -307,7 +307,7 @@ module {outname} ();
 
     initial begin
         @(negedge active);
-        assert(register_v0 == {config_table["ASSERT"]}) else $fatal(1); 
+        assert(register_v0 == {config_table["ASSERT"]}) else $fatal(1);
         $finish;
     end
 
@@ -329,15 +329,15 @@ endmodule
 		if ".data" in lines:
 			outF.writelines(datalines)
 			print("Data output appended to " + outpath + ".ram")
-		
+
 		outF.close()
-		
+
 		if "ASSERT" in config_table: # if assert is a key
 			verilogF = open(outpath + ".v", 'w')
 			verilogF.write(
 f"""
 module {outname} ();
-	
+
     logic active;
     logic[31:0] register_v0;
 	parameter WAIT_TYPE = "";
@@ -352,7 +352,7 @@ module {outname} ();
 
     initial begin
         @(negedge active);
-        assert(register_v0 == {config_table["ASSERT"]}) else $fatal(1); 
+        assert(register_v0 == {config_table["ASSERT"]}) else $fatal(1);
         $finish;
     end
 
@@ -363,7 +363,7 @@ endmodule
 			verilogF.close()
 
 	f.close()
-	
+
 
 FUNCCODE = {
 	"ADDU"  : 0b100001,
