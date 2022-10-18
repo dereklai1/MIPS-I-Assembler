@@ -50,6 +50,6 @@ Text and data labels are used to mark the start of instructions and initial ram 
 		#0b10101
 ```
 
-## Need to Implement
+## Possible Further Improvements
 - Endian change option
 - Error detection
